@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "753969047898",
+    "firebase_url": "https://takingphotosfirebase.firebaseio.com",
+    "project_id": "takingphotosfirebase",
+    "storage_bucket": "takingphotosfirebase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:753969047898:android:784979d3cd04d54e",
+        "android_client_info": {
+          "package_name": "tomerbu.edu.takingphotosfirebase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "753969047898-2s4i66n7nlkkk35bav65v8pfkm8070ud.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "tomerbu.edu.takingphotosfirebase",
+            "certificate_hash": "11198345D110CEE92D23376EF1165711277A9126"
+          }
+        },
+        {
+          "client_id": "753969047898-hv7vmsheg7tqknj8s5sdtv16apdr3kik.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBm1BU_tyrE_2jdP2-h4XOdvmxtDI2E49I"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "753969047898-hv7vmsheg7tqknj8s5sdtv16apdr3kik.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
