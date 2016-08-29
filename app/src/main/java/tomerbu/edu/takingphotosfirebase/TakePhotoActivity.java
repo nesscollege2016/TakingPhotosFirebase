@@ -12,19 +12,21 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
@@ -47,7 +49,14 @@ public class TakePhotoActivity extends AppCompatActivity {
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         //Sign in to Firebase
-        FirebaseAuth.getInstance().signInAnonymously();
+        FirebaseAuth.getInstance().signInAnonymously().addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+            @Override
+            public void onSuccess(AuthResult authResult) {
+                initRecycler();
+            }
+        });
+
+
     }
 
     @Override
@@ -119,46 +128,63 @@ public class TakePhotoActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == REQUEST_CODE_IMAGE && resultCode == RESULT_OK) {
 
-            // Bitmap b = data.getExtras().getParcelable("data");
+            // Bitmap b = dataSnapshotArrayList.getExtras().getParcelable("dataSnapshotArrayList");
 
             //Bundle extras = intent.getExtras();
-            // Bitmap bitamp = extras.getParcelable("data");
+            // Bitmap bitamp = extras.getParcelable("dataSnapshotArrayList");
 
             ImageView ivImageCapture = (ImageView) findViewById(R.id.ivImageCapture);
-            Picasso.with(this).load(photoUri).into(ivImageCapture);
+            Picasso.with(this).load(photoUri).rotate(180).into(ivImageCapture);
             saveImageToFirebase();
         }
     }
 
-    private void saveImageToFirebase() {
-        final StorageReference sRef = FirebaseStorage.getInstance().
-                getReferenceFromUrl(BUCKET).
-                child("Images").child(photoUri.getLastPathSegment());
+    private void initRecycler(){
+        RecyclerView rvImageRows = (RecyclerView) findViewById(R.id.rvImageRows);
+        rvImageRows.setLayoutManager(new LinearLayoutManager(
+                this, LinearLayoutManager.HORIZONTAL, false)
+        );
+        rvImageRows.setAdapter(new FireImageAdapter(this));
+    }
 
-        sRef.putFile(photoUri).
-                addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+
+    private void saveImageToFirebase() {
+        String bucket = "gs://takingphotosfirebase.appspot.com";
+
+        final StorageReference sRef = FirebaseStorage.getInstance().
+                getReferenceFromUrl(bucket).child("Images")
+                .child(photoUri.getLastPathSegment());
+
+
+        sRef.putFile(photoUri).addOnSuccessListener(
+                new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                sRef.getDownloadUrl().
-                        addOnSuccessListener(new OnSuccessListener<Uri>() {
+                Toast.makeText(TakePhotoActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
+                sRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
-                        DatabaseReference dbRef = FirebaseDatabase.
-                                getInstance().getReference();
-
+                        //The Uri is the web Storage Uri.
                         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                        dbRef.child("Recipies").child(uid).push().setValue(uri.toString());
+
+                        DatabaseReference ref = FirebaseDatabase.getInstance().
+                                getReference().child("Recipes").
+                                child(uid).push();
+
+
+
+                        ref.setValue(uri.toString());
+
+                        String key = ref.getKey();
+                        Toast.makeText(TakePhotoActivity.this, key, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
-        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                double up = taskSnapshot.getBytesTransferred();
-                double total = taskSnapshot.getTotalByteCount();
-                double pct = up/total*100;
-                Log.d("TomerBu", pct+"");
-            }
         });
+    }
+
+    public void showGallery(View view) {
+        ImageListFragment f = new ImageListFragment();
+        f.show(getSupportFragmentManager(), "Dialog");
     }
 }
