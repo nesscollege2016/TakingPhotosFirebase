@@ -2,7 +2,9 @@ package tomerbu.edu.takingphotosfirebase;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -38,7 +41,9 @@ public class TakePhotoActivity extends AppCompatActivity {
 
     private static final String BUCKET = "gs://takingphotosfirebase.appspot.com";
     private static final int REQUEST_CODE_IMAGE = 9;
+    private static final String PREFS_GOT_IT = "GotIt";
     private Uri photoUri;
+    private Typeface tf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +51,7 @@ public class TakePhotoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_take_photo);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        showTutorialIfNeeded();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         //Sign in to Firebase
         FirebaseAuth.getInstance().signInAnonymously().addOnSuccessListener(new OnSuccessListener<AuthResult>() {
@@ -55,9 +60,49 @@ public class TakePhotoActivity extends AppCompatActivity {
                 initRecycler();
             }
         });
+        tf = Typeface.createFromAsset(getAssets(), "elliniaclm-bolditalic-webfont.ttf");
+        TextView tvTutorial = (TextView) findViewById(R.id.tvTutorial);
+        tvTutorial.setTypeface(tf);
 
+        //changeFonts(getWindow().getDecorView());
 
     }
+
+    private void showTutorialIfNeeded() {
+        SharedPreferences prefs = getSharedPreferences("Tutorial", MODE_PRIVATE);
+        boolean showPrefs = prefs.getBoolean(PREFS_GOT_IT, false);
+        if (showPrefs){
+            findViewById(R.id.tutorial).animate().rotation(360).setDuration(2000);
+            findViewById(R.id.tutorial).setVisibility(View.VISIBLE);
+
+        }
+    }
+
+    public void saveGotIt(View view) {
+        SharedPreferences prefs = getSharedPreferences("Tutorial", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(PREFS_GOT_IT, false);
+        editor.commit();
+
+        findViewById(R.id.tutorial).setVisibility(View.GONE);
+    }
+
+
+
+/*    void changeFonts(View v){
+        //If it's a layout... iter over all the children
+        if (v instanceof ViewGroup){
+            ViewGroup vg = (ViewGroup) v;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                View childView = vg.getChildAt(i);
+                changeFonts(childView);
+            }
+        }
+        if (v instanceof TextView){
+            TextView tv = (TextView) v;
+            tv.setTypeface(tf);
+        }
+    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -187,4 +232,6 @@ public class TakePhotoActivity extends AppCompatActivity {
         ImageListFragment f = new ImageListFragment();
         f.show(getSupportFragmentManager(), "Dialog");
     }
+
+
 }

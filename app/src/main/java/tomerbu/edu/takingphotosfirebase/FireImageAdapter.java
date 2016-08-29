@@ -7,8 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -25,6 +27,7 @@ public class FireImageAdapter extends
         RecyclerView.Adapter<FireImageAdapter.ImageViewHolder>{
 
     ArrayList<DataSnapshot> dataSnapshotArrayList = new ArrayList<>();
+    ArrayList<DataSnapshot> dataSnapshotChildList = new ArrayList<>();
     Context context;
     LayoutInflater inflater;
 
@@ -55,7 +58,58 @@ public class FireImageAdapter extends
             }
         });
     }
+    
+    
+    int indexForKey(String key){
+        for (int i = 0; i < dataSnapshotChildList.size(); i++) {
+            DataSnapshot child = dataSnapshotChildList.get(i);
+            if (child.getKey().equals(key))
+                return i;
+        }
+        throw new IllegalArgumentException();
+    }
 
+    private void initData(){
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().
+                getReference().child("Recipes").
+                child(uid);
+
+        ref.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                dataSnapshotChildList.add(dataSnapshot);
+                notifyItemInserted(dataSnapshotChildList.size() - 1);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                int idx = indexForKey(dataSnapshot.getKey());
+                dataSnapshotChildList.set(idx, dataSnapshot);
+                notifyItemChanged(idx);
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                int idx = indexForKey(dataSnapshot.getKey());
+                dataSnapshotChildList.remove(idx);
+                notifyItemRemoved(idx);
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(context, databaseError.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
     @Override
     public ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = inflater.inflate(R.layout.image_item, parent, false);
